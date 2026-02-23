@@ -1,10 +1,12 @@
 import BottomSheet from "@/components/BottomSheet";
+import { fetchTopBudgetEntries } from "@/hooks/fetchData";
 import { supabase } from "@/lib/supabase";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { BottomSheetModal } from "@gorhom/bottom-sheet";
+import { useQuery } from "@tanstack/react-query";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
-import { useCallback, useRef } from "react";
+import { useCallback, useMemo, useRef } from "react";
 import {
   ScrollView,
   Text,
@@ -37,9 +39,47 @@ export default function Index() {
     }
   };
 
+  const { data: topBudgetEntries } = useQuery({
+    queryKey: ["topBudgetEntries"],
+    queryFn: async () => await fetchTopBudgetEntries(),
+    staleTime: 1000 * 60 * 5, // Cache for 5 minutes
+    refetchOnWindowFocus: false, // Don't refetch on window focus
+  });
+
+  const totalSpent = useMemo(() => {
+    if (!topBudgetEntries) return 0;
+    return topBudgetEntries
+      .filter(
+        (entry: any) =>
+          entry.type === "Expense" &&
+          entry.log_date >=
+            new Date(
+              Date.UTC(
+                new Date().getUTCFullYear(),
+                new Date().getUTCMonth(),
+                1,
+              ),
+            ).toISOString() &&
+          entry.log_date <
+            new Date(
+              Date.UTC(
+                new Date().getUTCFullYear(),
+                new Date().getUTCMonth() + 1,
+                1,
+              ),
+            ).toISOString(),
+      )
+      .reduce((sum: number, entry: any) => {
+        if (entry.type === "Expense") {
+          return sum + entry.amount;
+        }
+        return sum;
+      }, 0);
+  }, [topBudgetEntries]);
+
   // CHANGED: example values (replace with your real data)
   const budget = 2000;
-  const spent = 500;
+  const spent = totalSpent;
 
   // CHANGED: progress calculations
   const remaining = Math.max(budget - spent, 0);
@@ -51,6 +91,37 @@ export default function Index() {
   const handleOpenPress = useCallback(() => {
     bottomSheetRef.current?.present();
   }, []);
+
+  const exttopBudgetEntries = useMemo(
+    () =>
+      topBudgetEntries
+        ?.sort((a: any, b: any) => b.amount - a.amount)
+        .filter(
+          (entry: any) =>
+            entry.type === "Expense" &&
+            entry.log_date >=
+              new Date(
+                Date.UTC(
+                  new Date().getUTCFullYear(),
+                  new Date().getUTCMonth(),
+                  1,
+                ),
+              ).toISOString() &&
+            entry.log_date <
+              new Date(
+                Date.UTC(
+                  new Date().getUTCFullYear(),
+                  new Date().getUTCMonth() + 1,
+                  1,
+                ),
+              ).toISOString(),
+        )
+
+        .slice(0, 3),
+    [topBudgetEntries],
+  );
+
+  console.log(totalSpent);
 
   return (
     <SafeAreaProvider>
@@ -217,8 +288,52 @@ export default function Index() {
           >
             Top Spending
           </Text>
+          {exttopBudgetEntries ? (
+            exttopBudgetEntries.map((entry: any, index: number) => (
+              <View
+                key={index}
+                style={{
+                  width: "100%",
+                  marginTop: 10,
+                }}
+              >
+                <View
+                  style={{
+                    flexDirection: "row",
+                    justifyContent: "space-between",
+                  }}
+                >
+                  <Text style={{ color: "#202020" }}>{entry.category}</Text>
+                  <Text style={{ color: "#202020", fontWeight: "bold" }}>
+                    {formatterPHP.format(entry.amount)}
+                  </Text>
+                </View>
+                <View
+                  style={{
+                    height: 10,
+                    backgroundColor: "#f0f0f0",
+                    borderRadius: 999,
+                    overflow: "hidden",
+                  }}
+                >
+                  <View
+                    style={{
+                      width: `${(entry.amount / budget) * 100}%`,
+                      height: "100%",
+                      backgroundColor: "#a8a8a8",
+                      borderRadius: 999,
+                    }}
+                  />
+                </View>
+              </View>
+            ))
+          ) : (
+            <Text style={{ color: "#202020", marginTop: 10 }}>
+              No data available
+            </Text>
+          )}
 
-          {Array(4)
+          {/* {Array(4)
             .fill(0)
             .map((_, index) => (
               <View
@@ -259,7 +374,7 @@ export default function Index() {
                   />
                 </View>
               </View>
-            ))}
+            ))} */}
         </View>
 
         <View style={{ width: "100%", marginTop: 10, flex: 1 }}>
