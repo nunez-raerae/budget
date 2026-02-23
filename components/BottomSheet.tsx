@@ -7,6 +7,7 @@ import {
   BottomSheetView,
   TouchableOpacity,
 } from "@gorhom/bottom-sheet";
+import { useMutation } from "@tanstack/react-query";
 import React, { JSX, useCallback, useMemo } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 const categories = [
@@ -74,17 +75,22 @@ const BottomSheet = ({
     setCategory(selectedCategory);
   }, []);
 
-  const handleSave = async () => {
-    // Implement save logic here
-    try {
-      const dt = await supabase.from("budget").insert({
+  const { mutateAsync, isPending } = useMutation({
+    mutationKey: ["addEntry"],
+    mutationFn: async () =>
+      await supabase.from("budget").insert({
         amount: amount, // Get the value from the input
         type: type, // "Expense" or "Income"
         category: category, // Get the selected category
         desc: notes, // Get the notes from the input
         log_date: new Date().toISOString(), // Use current date or get from a date picker
         user_uuid: session?.session?.user?.id, // Get the user ID from the session
-      });
+      }),
+  });
+
+  const handleSave = async () => {
+    try {
+      await mutateAsync();
     } catch (error) {
       console.log(error);
     }
@@ -224,8 +230,10 @@ const BottomSheet = ({
         />
 
         <TouchableOpacity
+          disabled={isPending || category === ""}
           onPress={handleSave}
           style={{
+            opacity: isPending || category === "" ? 0.5 : 1,
             flexDirection: "row",
             marginTop: 16,
             width: "100%",
@@ -243,7 +251,7 @@ const BottomSheet = ({
               width: "100%",
             }}
           >
-            Save
+            {isPending ? "Saving..." : "Save"}
           </Text>
         </TouchableOpacity>
       </BottomSheetView>
