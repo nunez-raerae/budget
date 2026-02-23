@@ -95,6 +95,11 @@ const BottomSheet = ({
       setAmount("0");
       setCategory("");
       setNotes("");
+
+      if (ref && "current" in ref) {
+        ref.current?.dismiss();
+      }
+      // Close the bottom sheet
       queryClient.invalidateQueries({ queryKey: ["topBudgetEntries"] }); // Invalidate the query to refetch the updated data
     } catch (error) {
       console.log(error);
