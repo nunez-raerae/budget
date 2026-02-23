@@ -57,6 +57,9 @@ const BottomSheet = ({
   }, []);
 
   const [type, setType] = React.useState("Expense");
+  const [category, setCategory] = React.useState("");
+  const [amount, setAmount] = React.useState("0");
+  const [notes, setNotes] = React.useState("");
 
   const handleTypeChange = useCallback((newType: string) => {
     setType(newType);
@@ -67,14 +70,18 @@ const BottomSheet = ({
     [type],
   );
 
+  const handleSelectCategory = useCallback((selectedCategory: string) => {
+    setCategory(selectedCategory);
+  }, []);
+
   const handleSave = async () => {
     // Implement save logic here
     try {
       const dt = await supabase.from("budget").insert({
-        amount: 100.2, // Get the value from the input
-        type: "Expense", // "Expense" or "Income"
-        category: "Food", // Get the selected category
-        desc: "Dinner with friends",
+        amount: amount, // Get the value from the input
+        type: type, // "Expense" or "Income"
+        category: category, // Get the selected category
+        desc: notes, // Get the notes from the input
         log_date: new Date().toISOString(), // Use current date or get from a date picker
         user_uuid: session?.session?.user?.id, // Get the user ID from the session
       });
@@ -86,8 +93,10 @@ const BottomSheet = ({
   const renderCategory = useCallback(
     (item: string) => (
       <Pressable
+        onPress={() => handleSelectCategory(item)}
         key={item}
         style={{
+          opacity: category === item ? 1 : 0.5,
           width: 100,
           height: 40,
           justifyContent: "center",
@@ -101,7 +110,7 @@ const BottomSheet = ({
         <Text>{item}</Text>
       </Pressable>
     ),
-    [],
+    [category],
   );
 
   return (
@@ -169,6 +178,8 @@ const BottomSheet = ({
           <BottomSheetTextInput
             keyboardType="decimal-pad"
             ref={inputref}
+            value={amount.toString()}
+            onChangeText={(text) => setAmount(text.toString())}
             style={styles.input}
           />
           <Text
@@ -205,7 +216,12 @@ const BottomSheet = ({
         >
           Additonal notes (optional)
         </Text>
-        <BottomSheetTextInput keyboardType="default" style={styles.input1} />
+        <BottomSheetTextInput
+          value={notes}
+          onChangeText={(text) => setNotes(text)}
+          keyboardType="default"
+          style={styles.input1}
+        />
 
         <TouchableOpacity
           onPress={handleSave}
