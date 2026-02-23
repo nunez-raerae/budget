@@ -1,4 +1,4 @@
-import { BottomSheetModal, BottomSheetView } from "@gorhom/bottom-sheet";
+import { BottomSheetModal } from "@gorhom/bottom-sheet";
 import React, { useCallback, useMemo, useRef } from "react";
 import { StyleSheet, Text, View } from "react-native";
 const settings = () => {
@@ -17,22 +17,7 @@ const settings = () => {
         padding: 16,
       }}
     >
-      <Text onPress={() => handleOpenPress()}>settings</Text>
-
-      <BottomSheetModal
-        ref={bottomSheetRef}
-        snapPoints={snapPoints}
-        // index={-1}
-        enablePanDownToClose
-        // style={styles.bottomSheet}
-        keyboardBehavior="fillParent"
-        enableDynamicSizing={false}
-        bottomInset={10}
-      >
-        <BottomSheetView style={styles.sheetContent}>
-          <Text>Awesome 🎉</Text>
-        </BottomSheetView>
-      </BottomSheetModal>
+      <Text>settings</Text>
     </View>
   );
 };
