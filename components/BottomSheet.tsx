@@ -230,7 +230,7 @@ const BottomSheet = ({
         />
 
         <TouchableOpacity
-          disabled={isPending || category === ""}
+          disabled={category === ""}
           onPress={handleSave}
           style={{
             opacity: isPending || category === "" ? 0.5 : 1,
