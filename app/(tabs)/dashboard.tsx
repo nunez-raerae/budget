@@ -1,5 +1,5 @@
 import React from "react";
-import { Text, View } from "react-native";
+import { Text } from "react-native";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 
 const dashboard = () => {
@@ -13,13 +13,13 @@ const dashboard = () => {
           padding: 16,
         }}
       >
-        <View>
+        {/* <View>
           {Array(50)
             .fill(0)
             .map((_, index) => (
               <Text key={index}>Item {index + 1}</Text>
             ))}
-        </View>
+        </View> */}
         <Text>dashboard</Text>
       </SafeAreaView>
     </SafeAreaProvider>
