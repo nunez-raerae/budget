@@ -7,7 +7,7 @@ import {
   BottomSheetView,
   TouchableOpacity,
 } from "@gorhom/bottom-sheet";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import React, { JSX, useCallback, useMemo } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 const categories = [
@@ -48,7 +48,7 @@ const BottomSheet = ({
   const snapPoints = useMemo(() => ["40%"], []);
   const inputref =
     React.useRef<React.ComponentRef<typeof BottomSheetTextInput>>(null);
-
+  const queryClient = useQueryClient();
   const session = useAuthContext();
 
   const handleChange = useCallback((index: number) => {
@@ -91,6 +91,11 @@ const BottomSheet = ({
   const handleSave = async () => {
     try {
       await mutateAsync();
+      // Reset the form after saving
+      setAmount("0");
+      setCategory("");
+      setNotes("");
+      queryClient.invalidateQueries({ queryKey: ["topBudgetEntries"] }); // Invalidate the query to refetch the updated data
     } catch (error) {
       console.log(error);
     }
@@ -230,7 +235,7 @@ const BottomSheet = ({
         />
 
         <TouchableOpacity
-          disabled={category === ""}
+          disabled={isPending || category === ""}
           onPress={handleSave}
           style={{
             opacity: isPending || category === "" ? 0.5 : 1,
