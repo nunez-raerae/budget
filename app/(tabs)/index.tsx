@@ -1,4 +1,5 @@
 import BottomSheet from "@/components/BottomSheet";
+import DateCelendar from "@/components/DateCelendar";
 import { fetchTopBudgetEntries } from "@/hooks/fetchData";
 import { supabase } from "@/lib/supabase";
 import Ionicons from "@expo/vector-icons/Ionicons";
@@ -121,8 +122,6 @@ export default function Index() {
     [topBudgetEntries],
   );
 
-  console.log(totalSpent);
-
   return (
     <SafeAreaProvider>
       <SafeAreaView
@@ -141,9 +140,10 @@ export default function Index() {
             flexDirection: "row",
             flexWrap: "wrap",
             justifyContent: "space-between",
-            gap: 20, // if your RN version doesn't support `gap`, remove it and use margins
+            gap: 10, // if your RN version doesn't support `gap`, remove it and use margins
           }}
         >
+          <DateCelendar />
           {/* CHANGED: responsive card */}
           <LinearGradient
             // Background Linear Gradient
@@ -332,49 +332,6 @@ export default function Index() {
               No data available
             </Text>
           )}
-
-          {/* {Array(4)
-            .fill(0)
-            .map((_, index) => (
-              <View
-                key={index}
-                style={{
-                  width: "100%",
-                  marginTop: 10,
-                }}
-              >
-                <View
-                  style={{
-                    flexDirection: "row",
-                    justifyContent: "space-between",
-                  }}
-                >
-                  <Text style={{ color: "#202020" }}>
-                    Category {index + 10}
-                  </Text>
-                  <Text style={{ color: "#202020", fontWeight: "bold" }}>
-                    {formatterPHP.format((index + 1) * 100)}
-                  </Text>
-                </View>
-                <View
-                  style={{
-                    height: 10,
-                    backgroundColor: "#f0f0f0",
-                    borderRadius: 999,
-                    overflow: "hidden",
-                  }}
-                >
-                  <View
-                    style={{
-                      width: `${(index + 1) * Math.random() * 25}%`,
-                      height: "100%",
-                      backgroundColor: "#a8a8a8",
-                      borderRadius: 999,
-                    }}
-                  />
-                </View>
-              </View>
-            ))} */}
         </View>
 
         <View style={{ width: "100%", marginTop: 10, flex: 1 }}>
@@ -394,7 +351,7 @@ export default function Index() {
           </View>
           {/* <View style={{ width: "100%", flexGrow: 1 }}> */}
           <ScrollView
-            style={{ flex: 1 }}
+            style={{ flex: 1, borderRadius: 8 }}
             showsVerticalScrollIndicator={false}
             contentContainerStyle={{ gap: 10 }}
           >
