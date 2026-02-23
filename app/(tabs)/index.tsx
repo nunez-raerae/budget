@@ -1,14 +1,15 @@
 import BottomSheet from "@/components/BottomSheet";
 import DateCelendar from "@/components/DateCelendar";
-import { fetchTopBudgetEntries } from "@/hooks/fetchData";
+import { deleteBudgetEntry, fetchTopBudgetEntries } from "@/hooks/fetchData";
 import { supabase } from "@/lib/supabase";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { BottomSheetModal } from "@gorhom/bottom-sheet";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { LinearGradient } from "expo-linear-gradient";
-import { useRouter } from "expo-router";
+import { useFocusEffect, useRouter } from "expo-router";
 import { useCallback, useMemo, useRef } from "react";
 import {
+  Alert,
   ScrollView,
   Text,
   TouchableOpacity,
@@ -27,7 +28,7 @@ export default function Index() {
   const { width } = useWindowDimensions(); // CHANGED: read screen width
   const isWide = width >= 420; // CHANGED: breakpoint you can tweak
   const cardWidth = isWide ? "50%" : "100%";
-
+  const q = useQueryClient();
   const router = useRouter();
   const handleLogout = async () => {
     try {
@@ -44,8 +45,16 @@ export default function Index() {
     queryKey: ["topBudgetEntries"],
     queryFn: async () => await fetchTopBudgetEntries(),
     staleTime: 1000 * 60 * 5, // Cache for 5 minutes
-    refetchOnWindowFocus: false, // Don't refetch on window focus
+    refetchOnWindowFocus: true, // Refetch when the app comes back to foreground
+    refetchOnReconnect: true, // Refetch when the device reconnects to the internet
+    refetchOnMount: true, // Refetch when the component mounts
   });
+
+  useFocusEffect(
+    useCallback(() => {
+      q.invalidateQueries({ queryKey: ["topBudgetEntries"] }); // Invalidate the query to refetch the updated data
+    }, []),
+  );
 
   const totalSpent = useMemo(() => {
     if (!topBudgetEntries) return 0;
@@ -121,6 +130,72 @@ export default function Index() {
         .slice(0, 3),
     [topBudgetEntries],
   );
+
+  const { mutateAsync } = useMutation({
+    mutationKey: ["deleteEntry"],
+    mutationFn: async (entryId: number) => await deleteBudgetEntry(entryId),
+    onSuccess: () => {
+      q.invalidateQueries({ queryKey: ["topBudgetEntries"] }); // Invalidate the query to refetch the updated data
+    },
+  });
+
+  const handleDeleteEntry = useCallback((entryId: number) => {
+    Alert.alert("Delete Entry", "Are you sure you want to delete this entry?", [
+      {
+        text: "Cancel",
+        style: "cancel",
+      },
+      {
+        text: "Delete",
+        style: "destructive",
+        onPress: async () => {
+          try {
+            await mutateAsync(entryId);
+          } catch (error) {
+            console.error("Unexpected error deleting entry:", error);
+          }
+        },
+      },
+    ]);
+  }, []);
+
+  const recent = useCallback((item: any) => {
+    return (
+      <TouchableOpacity
+        key={item.id}
+        onLongPress={() => handleDeleteEntry(item.id)}
+      >
+        <View
+          style={{
+            width: "100%",
+            padding: 10,
+            backgroundColor: "#ffffff",
+            borderRadius: 8,
+            flexDirection: "row",
+            justifyContent: "space-between",
+          }}
+        >
+          <View>
+            <Text style={{ color: "#202020", fontWeight: "bold" }}>
+              {item.category}
+            </Text>
+            <Text style={{ color: "#202020", fontSize: 12 }}>
+              {new Date(item.log_date).toLocaleDateString()}
+            </Text>
+          </View>
+          <Text
+            style={{
+              color: item.type === "Expense" ? "#f10000" : "#abf4d0",
+              fontWeight: "bold",
+            }}
+          >
+            {item.type === "Expense" ? "-" : "+"}
+            {formatterPHP.format(item.amount)}
+          </Text>
+        </View>
+      </TouchableOpacity>
+    );
+  }, []);
 
   return (
     <SafeAreaProvider>
@@ -225,7 +300,7 @@ export default function Index() {
                     style={{
                       width: `${progress * 100}%`,
                       height: "100%",
-                      backgroundColor: spent > budget ? "#f10000" : "#ffffff",
+                      backgroundColor: spent > budget ? "#ff002b" : "#ffffff",
                     }}
                   />
                 </View>
@@ -278,16 +353,30 @@ export default function Index() {
             backgroundColor: "#ffffff",
           }}
         >
-          <Text
-            style={{
-              color: "#202020",
-              fontSize: 15,
-              fontWeight: "bold",
-              alignSelf: "flex-start",
-            }}
-          >
-            Top Spending
-          </Text>
+          {exttopBudgetEntries?.length !== 0 && (
+            <Text
+              style={{
+                color: "#202020",
+                alignSelf: "flex-start",
+                fontSize: 16,
+                fontWeight: "bold",
+              }}
+            >
+              Top Expenses this month
+            </Text>
+          )}
+          {exttopBudgetEntries?.length === 0 && (
+            <Text
+              style={{
+                color: "#202020",
+                alignSelf: "flex-start",
+                fontSize: 16,
+                fontWeight: "bold",
+              }}
+            >
+              No expenses recorded this month.
+            </Text>
+          )}
           {exttopBudgetEntries ? (
             exttopBudgetEntries.map((entry: any, index: number) => (
               <View
@@ -335,45 +424,28 @@ export default function Index() {
         </View>
 
         <View style={{ width: "100%", marginTop: 10, flex: 1 }}>
-          <View style={{ width: "100%", borderRadius: 10 }}>
-            <Text
-              style={{
-                marginTop: 20,
-                alignSelf: "flex-start",
-                fontSize: 16,
-                fontWeight: "bold",
-                color: "#202020",
-              }}
-            >
-              Recent Transactions
-            </Text>
-            <Text>Today</Text>
-          </View>
+          {topBudgetEntries?.length !== 0 && (
+            <View style={{ width: "100%", borderRadius: 10, marginBottom: 10 }}>
+              <Text
+                style={{
+                  marginTop: 10,
+                  alignSelf: "flex-start",
+                  fontSize: 16,
+                  fontWeight: "bold",
+                  color: "#202020",
+                }}
+              >
+                Recent Transactions
+              </Text>
+            </View>
+          )}
           {/* <View style={{ width: "100%", flexGrow: 1 }}> */}
           <ScrollView
             style={{ flex: 1, borderRadius: 8 }}
             showsVerticalScrollIndicator={false}
             contentContainerStyle={{ gap: 10 }}
           >
-            {Array(10)
-              .fill(0)
-              .map((_, index) => (
-                <View
-                  key={index}
-                  style={{
-                    width: "100%",
-                    height: 80,
-                    backgroundColor: "#ffffff",
-                    borderRadius: 8,
-                    marginRight: 10,
-                  }}
-                >
-                  <Text>Transaction {index + 1}</Text>
-                  <Text style={{ fontWeight: "bold" }}>
-                    {formatterPHP.format((index + 1) * 50)}
-                  </Text>
-                </View>
-              ))}
+            {topBudgetEntries?.map((entry: any) => recent(entry))}
           </ScrollView>
         </View>
 
