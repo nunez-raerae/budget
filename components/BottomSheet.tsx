@@ -1,27 +1,235 @@
-import { BottomSheetModal, BottomSheetView } from "@gorhom/bottom-sheet";
-import React, { JSX, useMemo } from "react";
-import { StyleSheet, Text } from "react-native";
+import { useAuthContext } from "@/hooks/use-auth-context";
+import { supabase } from "@/lib/supabase";
+import {
+  BottomSheetFlatList,
+  BottomSheetModal,
+  BottomSheetTextInput,
+  BottomSheetView,
+  TouchableOpacity,
+} from "@gorhom/bottom-sheet";
+import React, { JSX, useCallback, useMemo } from "react";
+import { Pressable, StyleSheet, Text, View } from "react-native";
+const categories = [
+  "Food",
+  "Transport",
+  "Entertainment",
+  "Shopping",
+  "Health",
+  "Education",
+  "Bills",
+  "Travel",
+  "Groceries",
+  "Dining Out",
+  "Fitness",
+  "Hobbies",
+  "Gifts",
+  "Personal Care",
+  "Subscriptions",
+  "Investments",
+  "Savings",
+  "Charity",
+  "Other",
+];
+
+const categoriesIncome = [
+  "Salary",
+  "Business",
+  "Freelance",
+  "Investments",
+  "Gifts",
+];
 
 const BottomSheet = ({
   ref,
 }: {
   ref: React.Ref<BottomSheetModal>;
 }): JSX.Element => {
-  const snapPoints = useMemo(() => ["25%"], []);
+  const snapPoints = useMemo(() => ["40%"], []);
+  const inputref =
+    React.useRef<React.ComponentRef<typeof BottomSheetTextInput>>(null);
+
+  const session = useAuthContext();
+
+  const handleChange = useCallback((index: number) => {
+    if (index === 0) {
+      inputref.current?.focus();
+    }
+  }, []);
+
+  const [type, setType] = React.useState("Expense");
+
+  const handleTypeChange = useCallback((newType: string) => {
+    setType(newType);
+  }, []);
+
+  const categoriesToShow = useMemo(
+    () => (type === "Expense" ? categories : categoriesIncome),
+    [type],
+  );
+
+  const handleSave = async () => {
+    // Implement save logic here
+    try {
+      const dt = await supabase.from("budget").insert({
+        amount: 100.2, // Get the value from the input
+        type: "Expense", // "Expense" or "Income"
+        category: "Food", // Get the selected category
+        desc: "Dinner with friends",
+        log_date: new Date().toISOString(), // Use current date or get from a date picker
+        user_uuid: session?.session?.user?.id, // Get the user ID from the session
+      });
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  const renderCategory = useCallback(
+    (item: string) => (
+      <Pressable
+        key={item}
+        style={{
+          width: 100,
+          height: 40,
+          justifyContent: "center",
+          alignItems: "center",
+          padding: 8,
+          backgroundColor: "#e2e2e2",
+          borderRadius: 20,
+          marginRight: 8,
+        }}
+      >
+        <Text>{item}</Text>
+      </Pressable>
+    ),
+    [],
+  );
 
   return (
     <BottomSheetModal
       ref={ref}
       snapPoints={snapPoints}
-      // index={-1}
-      enablePanDownToClose
-      // style={styles.bottomSheet}
-      keyboardBehavior="fillParent"
+      enablePanDownToClose={true}
+      keyboardBehavior="interactive"
+      onChange={handleChange}
       enableDynamicSizing={false}
       bottomInset={10}
+      stackBehavior="replace"
+      enableContentPanningGesture={false}
     >
       <BottomSheetView style={styles.sheetContent}>
-        <Text>Awesome 🎉</Text>
+        <View
+          style={{
+            width: "100%",
+
+            alignItems: "center",
+            marginBottom: 16,
+            flexDirection: "row",
+            gap: 8,
+          }}
+        >
+          <Pressable
+            onPress={() => handleTypeChange("Expense")}
+            style={{
+              opacity: type === "Expense" ? 1 : 0.5,
+              borderRadius: 20,
+              width: "50%",
+              height: 40,
+              backgroundColor: "#e2e2e2",
+              justifyContent: "center",
+              alignItems: "center",
+            }}
+          >
+            <Text style={{ fontWeight: "bold" }}>Expense</Text>
+          </Pressable>
+          <Pressable
+            onPress={() => handleTypeChange("Income")}
+            style={{
+              opacity: type === "Income" ? 1 : 0.5,
+              borderRadius: 20,
+              width: "50%",
+              height: 40,
+              backgroundColor: "#e2e2e2",
+              justifyContent: "center",
+              alignItems: "center",
+            }}
+          >
+            <Text style={{ fontWeight: "bold" }}>Income</Text>
+          </Pressable>
+        </View>
+        <View
+          style={{
+            width: "100%",
+            backgroundColor: "#e2e2e2",
+            borderRadius: 10,
+            padding: 8,
+            paddingLeft: 30,
+            justifyContent: "center",
+          }}
+        >
+          <BottomSheetTextInput
+            keyboardType="decimal-pad"
+            ref={inputref}
+            style={styles.input}
+          />
+          <Text
+            style={{
+              padding: 8,
+              position: "absolute",
+              fontSize: 35,
+              fontWeight: "400",
+            }}
+          >
+            ₱
+          </Text>
+        </View>
+
+        <View style={{ width: "100%", flex: 1, marginTop: 16 }}>
+          <BottomSheetFlatList
+            horizontal
+            data={categoriesToShow}
+            keyExtractor={(item: string) => item}
+            renderItem={({ item }: { item: string }) => renderCategory(item)}
+            showsHorizontalScrollIndicator={false}
+            style={{ width: "100%" }}
+            contentContainerStyle={{ paddingRight: 16 }}
+          />
+        </View>
+        <Text
+          style={{
+            alignSelf: "flex-start",
+            marginBottom: 8,
+            fontWeight: "bold",
+            marginTop: 16,
+            color: "#555",
+          }}
+        >
+          Additonal notes (optional)
+        </Text>
+        <BottomSheetTextInput keyboardType="default" style={styles.input1} />
+
+        <TouchableOpacity
+          onPress={handleSave}
+          style={{
+            flexDirection: "row",
+            marginTop: 16,
+            width: "100%",
+            backgroundColor: "#007bff",
+            paddingVertical: 12,
+            paddingHorizontal: 32,
+            borderRadius: 8,
+          }}
+        >
+          <Text
+            style={{
+              color: "#fff",
+              textAlign: "center",
+              fontWeight: "bold",
+              width: "100%",
+            }}
+          >
+            Save
+          </Text>
+        </TouchableOpacity>
       </BottomSheetView>
     </BottomSheetModal>
   );
@@ -49,5 +257,31 @@ const styles = StyleSheet.create({
     backgroundColor: "#fff",
     justifyContent: "center",
     alignItems: "center",
+  },
+  input: {
+    width: "100%",
+    // height: 40,
+    borderColor: "gray",
+    fontSize: 25,
+
+    fontStyle: "normal",
+    fontWeight: "bold",
+    borderRadius: 10,
+    paddingHorizontal: 8,
+  },
+  input1: {
+    width: "100%",
+    // height: 40,
+    borderColor: "gray",
+    fontSize: 18,
+
+    fontStyle: "normal",
+    borderRadius: 10,
+    paddingHorizontal: 8,
+
+    backgroundColor: "#e2e2e2",
+
+    padding: 8,
+    paddingLeft: 5,
   },
 });
