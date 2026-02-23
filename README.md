@@ -1,50 +1,58 @@
-# Welcome to your Expo app 👋
+# Budget App 💸
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+A simple, straightforward budget tracker built with **Expo (React Native)** and **Supabase**.
 
-## Get started
+## Features
 
-1. Install dependencies
+- Add **Income** and **Expense** entries (with categories + optional notes)
+- Smooth entry form using a **Bottom Sheet**
+- Monthly entries fetch (current month)
+- Powered by **React Query** for caching/refetching
 
-   ```bash
-   npm install
-   ```
+## Tech Stack
 
-2. Start the app
+- Expo / React Native
+- TypeScript
+- Supabase
+- @tanstack/react-query
+- @gorhom/bottom-sheet
 
-   ```bash
-   npx expo start
-   ```
+## Getting Started
 
-In the output, you'll find options to open the app in a
+### 1) Install dependencies
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
-
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
-
-```bash
-npm run reset-project
+```sh
+npm install
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+### 2) Set up environment variables
 
-## Learn more
+Create a `.env` file (if you don’t have one) and add your Supabase credentials:
 
-To learn more about developing your project with Expo, look at the following resources:
+```env
+EXPO_PUBLIC_SUPABASE_URL=your_url_here
+EXPO_PUBLIC_SUPABASE_ANON_KEY=your_anon_key_here
+```
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+### 3) Run the app
 
-## Join the community
+```sh
+npx expo start
+```
 
-Join our community of developers creating universal apps.
+## Project Structure (high level)
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+- `app/` – screens & navigation (Expo Router)
+- `components/` – UI components (BottomSheet, DateCelendar, etc.)
+- `hooks/` – data fetching + auth hooks
+- `lib/` – shared utilities (Supabase client, colors)
+- `provider/` – app providers (auth provider)
+
+## Notes
+
+- Budget entries are stored in Supabase table: `budget`.
+- The “current month” query logic lives in [`fetchTopBudgetEntries`](hooks/fetchData.ts).
+
+---
+
+Built for simplicity ✅
