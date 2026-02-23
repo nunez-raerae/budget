@@ -1,6 +1,6 @@
 import { LinearGradient } from "expo-linear-gradient";
 import React, { useCallback, useMemo } from "react";
-import { StyleSheet, Text, View } from "react-native";
+import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { ScrollView } from "react-native-gesture-handler";
 
 type DateItem = {
@@ -55,24 +55,28 @@ const DateCelendar = () => {
 
   const DateItemView = useCallback(({ date }: { date: DateItem }) => {
     return (
-      <LinearGradient
-        // Background Linear Gradient
-        colors={["#8776b3", "#c0a8ff"]}
-        key={date.key}
-        style={{
-          width: 65,
-          height: 60,
-          padding: 5,
-          backgroundColor: "#a99ad1",
-          borderRadius: 5,
-          marginRight: 10,
-        }}
-      >
-        <Text style={{ color: "#ffffff", fontWeight: "bold", fontSize: 18 }}>
-          {date.dateLabel}
-        </Text>
-        <Text style={{ color: "#ffffff", fontSize: 16 }}>{date.dayLabel}</Text>
-      </LinearGradient>
+      <TouchableOpacity>
+        <LinearGradient
+          // Background Linear Gradient
+          colors={["#8776b3", "#c0a8ff"]}
+          key={date.key}
+          style={{
+            width: 70,
+            height: 60,
+            padding: 5,
+            backgroundColor: "#a99ad1",
+            borderRadius: 5,
+            marginRight: 10,
+          }}
+        >
+          <Text style={{ color: "#ffffff", fontWeight: "bold", fontSize: 18 }}>
+            {date.dateLabel}
+          </Text>
+          <Text style={{ color: "#ffffff", fontSize: 16 }}>
+            {date.dayLabel}
+          </Text>
+        </LinearGradient>
+      </TouchableOpacity>
     );
   }, []);
 
