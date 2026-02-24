@@ -56,6 +56,10 @@ export default function Index() {
     }, []),
   );
 
+  const sheetss = useCallback(() => {
+    return <BottomSheet ref={bottomSheetRef} />;
+  }, []);
+
   const totalSpent = useMemo(() => {
     if (!topBudgetEntries) return 0;
     return topBudgetEntries
@@ -478,7 +482,7 @@ export default function Index() {
             <Ionicons name="add" color={"#ffffff"} size={scale(40)} />
           </LinearGradient>
         </TouchableOpacity>
-        <BottomSheet ref={bottomSheetRef} />
+        {sheetss()}
       </SafeAreaView>
     </SafeAreaProvider>
   );
