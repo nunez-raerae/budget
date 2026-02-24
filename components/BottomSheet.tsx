@@ -12,33 +12,33 @@ import React, { JSX, useCallback, useMemo } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 const categories = [
-  "Food",
-  "Transport",
-  "Entertainment",
-  "Shopping",
-  "Health",
-  "Education",
-  "Bills",
-  "Travel",
-  "Groceries",
-  "Dining Out",
-  "Fitness",
-  "Hobbies",
-  "Gifts",
-  "Personal",
-  "Subscription",
-  "Investment",
-  "Savings",
-  "Charity",
-  "Other",
+  "🍖 Food",
+  "🚗 Transport",
+  "🎬 Entertainment",
+  "🛍️ Shopping",
+  "🏥 Health",
+  "🎓 Education",
+  "💡 Bills",
+  "✈️ Travel",
+  "🛒 Groceries",
+  "🍽️ Dining Out",
+  "🏋️ Fitness",
+  "🎨 Hobbies",
+  "🎁 Gifts",
+  "🧑‍💼 Personal",
+  "📦 Subscription",
+  "💰 Investment",
+  "💵 Savings",
+  "🎗️ Charity",
+  "❓ Other",
 ];
 
 const categoriesIncome = [
-  "Salary",
-  "Business",
-  "Freelance",
-  "Investments",
-  "Gifts",
+  "💼 Salary",
+  "🏢 Business",
+  "💻 Freelance",
+  "📈 Investments",
+  "🎁 Gifts",
 ];
 
 type formType = {
@@ -61,6 +61,7 @@ const BottomSheet = ({
 
   const {
     control,
+    reset,
     watch,
     setValue,
     handleSubmit,
@@ -92,8 +93,6 @@ const BottomSheet = ({
     (newType: formType["type"]) => {
       setValue("type", newType, {
         shouldValidate: true,
-        shouldDirty: true,
-        shouldTouch: true,
       });
     },
     [setValue],
@@ -103,8 +102,6 @@ const BottomSheet = ({
     (selectedCategory: formType["category"]) => {
       setValue("category", selectedCategory, {
         shouldValidate: true,
-        shouldDirty: true,
-        shouldTouch: true,
       });
     },
     [setValue],
@@ -126,7 +123,12 @@ const BottomSheet = ({
   const handleSave = handleSubmit(async (data) => {
     try {
       await mutateAsync(data);
-
+      reset({
+        type: "Expense",
+        category: "",
+        amount: "0",
+        notes: "",
+      });
       if (ref && "current" in ref) {
         ref.current?.dismiss();
       }
@@ -136,6 +138,7 @@ const BottomSheet = ({
       console.log(error);
     }
   });
+  const canSave = isValid && !isPending;
 
   const renderCategory = useCallback(
     (item: string) => (
@@ -187,6 +190,12 @@ const BottomSheet = ({
             control={control}
             name="type"
             rules={{ required: "Type is required" }}
+            render={() => <></>}
+          />
+          <Controller
+            control={control}
+            name="category"
+            rules={{ required: "Category is required" }}
             render={() => <></>}
           />
           <Pressable
@@ -293,10 +302,10 @@ const BottomSheet = ({
         />
 
         <TouchableOpacity
-          disabled={isPending || isValid}
-          onPress={handleSave}
+          disabled={!canSave}
+          onPress={canSave ? handleSave : undefined}
           style={{
-            opacity: isPending || isValid ? 0.5 : 1,
+            opacity: canSave ? 0.5 : 1,
             flexDirection: "row",
             marginTop: 16,
             width: "100%",
