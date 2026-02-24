@@ -9,6 +9,7 @@ import {
 } from "@gorhom/bottom-sheet";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import React, { JSX, useCallback, useMemo } from "react";
+import { Controller, useForm } from "react-hook-form";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 const categories = [
   "Food",
@@ -40,6 +41,13 @@ const categoriesIncome = [
   "Gifts",
 ];
 
+type formType = {
+  type: string;
+  category: string;
+  amount: string;
+  notes: string;
+};
+
 const BottomSheet = ({
   ref,
 }: {
@@ -51,50 +59,73 @@ const BottomSheet = ({
   const queryClient = useQueryClient();
   const session = useAuthContext();
 
+  const {
+    control,
+    watch,
+    setValue,
+    handleSubmit,
+    formState: { errors, isValid },
+  } = useForm<formType>({
+    defaultValues: {
+      type: "Expense",
+      category: "",
+      amount: "0",
+      notes: "",
+    },
+  });
+
   const handleChange = useCallback((index: number) => {
     if (index === 0) {
       inputref.current?.focus();
     }
   }, []);
 
-  const [type, setType] = React.useState("Expense");
-  const [category, setCategory] = React.useState("");
-  const [amount, setAmount] = React.useState("0");
-  const [notes, setNotes] = React.useState("");
-
-  const handleTypeChange = useCallback((newType: string) => {
-    setType(newType);
-  }, []);
+  const type = watch("type");
+  const category = watch("category");
 
   const categoriesToShow = useMemo(
     () => (type === "Expense" ? categories : categoriesIncome),
     [type],
   );
 
-  const handleSelectCategory = useCallback((selectedCategory: string) => {
-    setCategory(selectedCategory);
-  }, []);
+  const handleTypeChange = useCallback(
+    (newType: formType["type"]) => {
+      setValue("type", newType, {
+        shouldValidate: true,
+        shouldDirty: true,
+        shouldTouch: true,
+      });
+    },
+    [setValue],
+  );
+
+  const handleSelectCategory = useCallback(
+    (selectedCategory: formType["category"]) => {
+      setValue("category", selectedCategory, {
+        shouldValidate: true,
+        shouldDirty: true,
+        shouldTouch: true,
+      });
+    },
+    [setValue],
+  );
 
   const { mutateAsync, isPending } = useMutation({
     mutationKey: ["addEntry"],
-    mutationFn: async () =>
+    mutationFn: async (data: formType) =>
       await supabase.from("budget").insert({
-        amount: amount, // Get the value from the input
-        type: type, // "Expense" or "Income"
-        category: category, // Get the selected category
-        desc: notes, // Get the notes from the input
+        amount: data.amount, // Get the value from the input
+        type: data.type, // "Expense" or "Income"
+        category: data.category, // Get the selected category
+        desc: data.notes, // Get the notes from the input
         log_date: new Date().toISOString(), // Use current date or get from a date picker
         user_uuid: session?.session?.user?.id, // Get the user ID from the session
       }),
   });
 
-  const handleSave = async () => {
+  const handleSave = handleSubmit(async (data) => {
     try {
-      await mutateAsync();
-      // Reset the form after saving
-      setAmount("0");
-      setCategory("");
-      setNotes("");
+      await mutateAsync(data);
 
       if (ref && "current" in ref) {
         ref.current?.dismiss();
@@ -104,7 +135,7 @@ const BottomSheet = ({
     } catch (error) {
       console.log(error);
     }
-  };
+  });
 
   const renderCategory = useCallback(
     (item: string) => (
@@ -134,9 +165,9 @@ const BottomSheet = ({
       ref={ref}
       snapPoints={snapPoints}
       enablePanDownToClose={true}
-      keyboardBehavior="interactive"
+      keyboardBehavior="extend"
       onChange={handleChange}
-      enableDynamicSizing={true}
+      enableDynamicSizing={false}
       bottomInset={10}
       stackBehavior="replace"
       enableContentPanningGesture={false}
@@ -152,6 +183,12 @@ const BottomSheet = ({
             gap: 8,
           }}
         >
+          <Controller
+            control={control}
+            name="type"
+            rules={{ required: "Type is required" }}
+            render={() => <></>}
+          />
           <Pressable
             onPress={() => handleTypeChange("Expense")}
             style={{
@@ -191,13 +228,22 @@ const BottomSheet = ({
             justifyContent: "center",
           }}
         >
-          <BottomSheetTextInput
-            keyboardType="decimal-pad"
-            ref={inputref}
-            value={amount.toString()}
-            onChangeText={(text) => setAmount(text.toString())}
-            style={styles.input}
+          <Controller
+            control={control}
+            name="amount"
+            render={({ field: { value, onChange, onBlur } }) => (
+              <BottomSheetTextInput
+                keyboardType="decimal-pad"
+                ref={inputref}
+                id="amount"
+                value={value.toString()}
+                onChangeText={(text) => onChange(text)}
+                onBlur={onBlur}
+                style={styles.input}
+              />
+            )}
           />
+
           <Text
             style={{
               padding: 8,
@@ -232,18 +278,25 @@ const BottomSheet = ({
         >
           Additonal notes (optional)
         </Text>
-        <BottomSheetTextInput
-          value={notes}
-          onChangeText={(text) => setNotes(text)}
-          keyboardType="default"
-          style={styles.input1}
+        <Controller
+          control={control}
+          name="notes"
+          render={({ field: { value, onChange, onBlur } }) => (
+            <BottomSheetTextInput
+              value={value}
+              onChangeText={(text) => onChange(text)}
+              onBlur={onBlur}
+              keyboardType="default"
+              style={styles.input1}
+            />
+          )}
         />
 
         <TouchableOpacity
-          disabled={isPending || category === ""}
+          disabled={isPending || isValid}
           onPress={handleSave}
           style={{
-            opacity: isPending || category === "" ? 0.5 : 1,
+            opacity: isPending || isValid ? 0.5 : 1,
             flexDirection: "row",
             marginTop: 16,
             width: "100%",
