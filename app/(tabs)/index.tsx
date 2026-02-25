@@ -142,7 +142,8 @@ function TimeFrameButtons() {
             justifyContent: "center",
             alignItems: "center",
             flex: 1,
-            minWidth: 90,
+
+            minWidth: 70,
             backgroundColor:
               currentTimeFrame === frame ? "#ffffff" : "transparent",
             paddingVertical: 8,
