@@ -1,5 +1,5 @@
 import Ionicons from "@expo/vector-icons/Ionicons";
-import React from "react";
+import React, { useState } from "react";
 import { Pressable, Text, View } from "react-native";
 import {
   createAnimatedComponent,
@@ -11,7 +11,16 @@ import {
   withTiming,
 } from "react-native-reanimated";
 
-const Insights = () => {
+interface Transaction {
+  title: string;
+  amount: number;
+}
+
+interface InsightsProps {
+  transactions?: Transaction[];
+}
+
+const Insights = ({ transactions = [] }: InsightsProps) => {
   const PressableAnimted = createAnimatedComponent(Pressable);
   const Iconsss = createAnimatedComponent(Ionicons);
   const [isFocused, setFocused] = React.useState(false);
@@ -45,6 +54,21 @@ const Insights = () => {
   const iconAnimatedStyle = useAnimatedStyle(() => ({
     transform: [{ scale: beat.value }, { translateX: shake.value }],
   }));
+  const [aiInsight, setAiInsight] = useState("");
+  const [isLoadingInsight, setIsLoadingInsight] = useState(false);
+
+  const handleGetInsight = async () => {
+    const data = fetch("/api/gemini", {
+      method: "GET",
+    });
+    data
+      .then(async (res) => await res.json())
+      .then((json) => {
+        setAiInsight(json.response.candidates[0].content.parts[0].text);
+        setIsLoadingInsight(false);
+      });
+    setIsLoadingInsight(true);
+  };
 
   return (
     <View style={{ marginTop: 16, width: "100%", padding: 16 }}>
@@ -81,7 +105,10 @@ const Insights = () => {
             </Text>
           </View>
           <PressableAnimted
-            onPress={() => setFocused(true)}
+            onPress={() => {
+              setFocused(true);
+              handleGetInsight();
+            }}
             style={{
               transform: [{ scale: isFocused ? 1.05 : 1 }],
               transitionDuration: "200ms",
@@ -103,7 +130,11 @@ const Insights = () => {
             <Text style={{ color: "#4f46e5", fontWeight: "500", fontSize: 14 }}>
               AI Analyze
             </Text>
+            <Text>{isLoadingInsight ? "Generating..." : "Generate"}</Text>
           </PressableAnimted>
+        </View>
+        <View>
+          <Text>{aiInsight}</Text>
         </View>
       </View>
     </View>
